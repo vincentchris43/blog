@@ -21,3 +21,9 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+      - name: Upload static site (no server bundle)
+        uses: actions/upload-artifact@v4
+        with:
+          name: blog-static
+          path: dist/client
+          if-no-files-found: error
