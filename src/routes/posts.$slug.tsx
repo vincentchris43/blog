@@ -1,5 +1,6 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import Markdown from 'react-markdown'
+import { MarkdownLink } from '../components/markdown-link'
 import { formatDate, posts } from '../lib/posts'
 
 export const Route = createFileRoute('/posts/$slug')({
@@ -39,7 +40,13 @@ function Post() {
         <p>{post.description}</p>
       </header>
       <div className="prose">
-        <Markdown>{post.content}</Markdown>
+        <Markdown
+          components={{
+            a: ({ node: _node, ...props }) => <MarkdownLink {...props} />,
+          }}
+        >
+          {post.content}
+        </Markdown>
       </div>
       <div className="post-end">
         <Link to="/" className="text-link">

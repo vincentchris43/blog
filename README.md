@@ -22,9 +22,10 @@ npm run dev
 - 示例文章：`/posts/hello-blog`、`/posts/writing-as-thinking`
 - 404 验证：`/posts/not-found` 或其他不存在的路径
 
-## 类型检查与构建
+## 测试、类型检查与构建
 
 ```bash
+npm test
 npm run typecheck
 npm run build
 npm run preview
@@ -32,20 +33,40 @@ npm run preview
 
 `typecheck` 会先生成类型安全的路由树，再运行 TypeScript 检查。`build` 生成 `dist/` 下的客户端及服务端产物，`preview` 用于在本地预览构建结果，以终端输出的地址为准。部署平台与生产运行适配留待后续确定。
 
-GitHub Actions 在 PR 和 `main` 推送时执行依赖安装、类型检查与构建。
+`npm test` 使用 Vitest 验证实际 content 目录的自动收集，以及元信息解析、必填字段、真实日历日期、重复 slug、空正文与排序；另用内存 Router 验证 Markdown 内外链、相对路径和查询参数/片段的渲染。GitHub Actions 在 PR 和 `main` 推送时执行依赖安装、测试、类型检查与构建。checkout/setup-node 使用运行于 Node 24 的 v5，项目构建也使用 Node 24。
+
+`@tanstack/router-cli` 固定为当前锁文件中的 `1.167.46`，避免路由生成器随 caret 范围漂移；升级时与 Router/Start 一起复核路由生成、测试、类型检查和构建。
 
 ## 写一篇文章
 
-1. 在 `src/content/` 添加 `.md` 文件，正文从二级标题开始（页面会显示文章主标题）。
-2. 在 `src/lib/posts.ts` 中以 `?raw` 导入文件，并添加文章信息：唯一的 `slug`、标题、`YYYY-MM-DD` 日期、分类、摘要和正文。
-3. 保存后首页自动按日期倒序展示，详情页地址为 `/posts/<slug>`。
+1. 在 `src/content/` 添加 `.md` 文件（支持子目录）。文件名去掉扩展名就是 slug，须由小写字母、数字和单个连字符组成，且所有子目录内不能重名，例如 `my-first-post.md`。
+2. 文件顶部填写 YAML frontmatter，日期建议加引号；正文从二级标题开始（页面会显示文章主标题）：
+
+   ```markdown
+   ---
+   title: 第一篇文章
+   date: '2026-10-25'
+   category: 开发手记
+   description: 一句话摘要。
+   ---
+
+   ## 正文标题
+
+   写下内容。
+   ```
+
+3. 无需编辑 registry：Vite 自动扫描 `src/content/**/*.md`，首页按日期倒序展示（同日按 slug 排序），详情页地址为 `/posts/<slug>`。标题、日期、分类、摘要和正文均不可为空；无效日期或重复 slug 会报出文件路径，`npm test` 会校验实际文章。
+
+站内链接推荐使用 `/posts/<slug>` 或 `/`（不是 `.md` 文件路径），统一通过 TanStack Router `Link` 导航，也支持相对路径、查询参数与片段。外部 URL、`mailto:`、协议相对 URL 和纯页内 `#anchor` 保留原生链接行为。
 
 支持常用 Markdown 标题、列表、链接、引用和代码块。不执行 Markdown 内的 HTML 或脚本，无需数据库或 CMS。
 
 ```text
 src/
-  content/              # 中文 Markdown 示例
-  lib/posts.ts          # 文章信息与日期格式化
+  content/              # 含 frontmatter 的中文 Markdown
+  components/markdown-link.tsx # Markdown 内链导航
+  lib/posts.ts          # 自动收集文章与日期格式化
+  lib/parse-posts.ts    # frontmatter 解析、校验与排序
   routes/__root.tsx     # 共享布局、页面元信息与 404
   routes/index.tsx      # 首页文章列表
   routes/posts.$slug.tsx # 文章详情
