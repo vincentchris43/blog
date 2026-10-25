@@ -9,9 +9,10 @@
     "test": "vitest run",
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
-    "build": "vite build",
-    "preview": "vite preview",
-    "typecheck": "npm run generate-routes && tsc --noEmit"
+    "build": "vite build && npm run test:static",
+    "preview": "http-server dist/client -a 127.0.0.1 -p 4173 -c-1 -d false",
+    "typecheck": "npm run generate-routes && tsc --noEmit",
+    "test:static": "vitest run --config vitest.static.config.ts"
   },
   "dependencies": {
     "@tanstack/react-router": "1.170.46",
@@ -27,6 +28,7 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
+    "http-server": "14.1.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "5.0.5"
